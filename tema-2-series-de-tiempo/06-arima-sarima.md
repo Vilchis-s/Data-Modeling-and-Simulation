@@ -1,18 +1,18 @@
 # 2.6 ARIMA y SARIMA
 
-ARIMA es el modelo de series de tiempo más usado de la historia y, con razón, el estándar contra el que se mide todo lo demás. Su nombre describe sus tres ingredientes: AutoRegresivo, Integrado, de Medias móviles. La pieza nueva respecto al capítulo anterior es la I, la integración, que es la forma elegante de incorporar la diferenciación dentro del propio modelo.
+ARIMA es el modelo de series de tiempo más utilizado de la historia y, con razón, el estándar frente al cual se mide todo lo demás. Su nombre describe sus tres ingredientes: AutoRegresivo, Integrado, de Medias móviles. El elemento nuevo respecto al capítulo anterior es la I, la integración, que es la forma elegante de incorporar la diferenciación dentro del propio modelo.
 
 ## Los tres órdenes de un ARIMA(p, d, q)
 
-Un ARIMA tiene tres parámetros enteros:
+Un ARIMA tiene tres parámetros enteros.
 
-p es el orden autorregresivo, cuántos valores pasados de la serie entran.
+p es el orden autorregresivo: cuántos valores pasados de la serie intervienen.
 
-d es el orden de integración, cuántas veces hay que diferenciar la serie para volverla estacionaria.
+d es el orden de integración: cuántas veces hay que diferenciar la serie para volverla estacionaria.
 
-q es el orden de medias móviles, cuántos choques pasados entran.
+q es el orden de medias móviles: cuántos choques pasados intervienen.
 
-La d es la clave que conecta con la estacionariedad. En el capítulo 2.2 vi que el PIB en niveles no es estacionario pero su primera diferencia sí lo es. Un ARIMA(p, 1, q) modela exactamente eso: diferencia la serie una vez internamente, ajusta un ARMA(p, q) sobre la serie diferenciada, y luego deshace la diferenciación para devolver pronósticos en la escala original. Ya no tengo que diferenciar a mano: le digo d=1 y el modelo se encarga.
+La d es la clave que conecta con la estacionariedad. En el capítulo 2.2 se observó que el PIB en niveles no es estacionario, pero su primera diferencia sí lo es. Un ARIMA(p, 1, q) modela exactamente eso: diferencia la serie una vez de forma interna, ajusta un ARMA(p, q) sobre la serie diferenciada y luego deshace la diferenciación para devolver pronósticos en la escala original. Ya no es necesario diferenciar manualmente: se indica d=1 y el modelo se encarga.
 
 ```python
 import wbgapi as wb
@@ -24,20 +24,20 @@ pib = wb.data.DataFrame("NY.GDP.MKTP.CD", "CHN", time=range(1980, 2023)).iloc[0]
 pib = pib.sort_index().astype(float) / 1e12
 pib.index = pd.period_range("1980", "2022", freq="Y")
 
-log_pib = np.log(pib)                       # estabilizo varianza
+log_pib = np.log(pib)                       # estabiliza la varianza
 modelo = ARIMA(log_pib, order=(1, 1, 1)).fit()
 print(modelo.summary())
 ```
 
-Modelo el logaritmo del PIB con un ARIMA(1,1,1): primero el logaritmo estabiliza la varianza creciente, luego la diferenciación interna estabiliza la media. Es la receta estándar para una variable económica en niveles.
+Se modela el logaritmo del PIB con un ARIMA(1,1,1): primero el logaritmo estabiliza la varianza creciente, luego la diferenciación interna estabiliza la media. Es la receta estándar para una variable económica en niveles.
 
 ## Pronóstico con intervalos
 
-Un pronóstico sin medida de incertidumbre es casi inútil, y aquí ARIMA brilla, porque entrega intervalos de predicción de forma natural. La guía del curso es enfática en que nunca se reporta un estimador puntual sin su intervalo (Law, 2014), y esa regla aplica al pronóstico tal cual.
+Un pronóstico sin medida de incertidumbre es casi inútil, y en este aspecto ARIMA destaca, pues entrega intervalos de predicción de forma natural. La guía de estudio es enfática en que nunca se reporta un estimador puntual sin su intervalo, y esa regla se aplica al pronóstico de forma directa.
 
 ```python
 pred = modelo.get_forecast(steps=10)
-media = np.exp(pred.predicted_mean)                  # vuelvo a escala original
+media = np.exp(pred.predicted_mean)                  # vuelve a escala original
 ic = np.exp(pred.conf_int(alpha=0.05))               # intervalo al 95%
 
 import matplotlib.pyplot as plt
@@ -50,19 +50,19 @@ plt.title("ARIMA(1,1,1) sobre PIB de China con intervalo al 95%")
 plt.show()
 ```
 
-El intervalo se abre conforme avanza el horizonte, lo cual es honesto: cuanto más lejos proyecto, menos sé. Esa apertura es exactamente la incertidumbre que un modelo determinista como la ODE logística del Tema 1 no podía expresar, y es una de las grandes ventajas de la rama estadística.
+El intervalo se ensancha conforme avanza el horizonte, lo cual es honesto: cuanto más lejana es la proyección, menor es el conocimiento disponible. Ese ensanchamiento es precisamente la incertidumbre que un modelo determinista como la ODE logística del Tema 1 no podía expresar, y constituye una de las grandes ventajas de la rama estadística.
 
 ## SARIMA: incorporando estacionalidad
 
-Cuando la serie tiene un patrón estacional, ARIMA no basta y entra SARIMA, que agrega un bloque estacional con sus propios órdenes:
+Cuando la serie presenta un patrón estacional, ARIMA no basta y entra SARIMA, que agrega un bloque estacional con sus propios órdenes:
 
 ```
 SARIMA(p, d, q)(P, D, Q, s)
 ```
 
-Los primeros tres son los órdenes no estacionales de siempre. Los siguientes cuatro son sus análogos estacionales: P, D, Q son el AR, la integración y el MA estacionales, y s es el periodo de la estación, por ejemplo 4 en datos trimestrales o 12 en mensuales. La D estacional diferencia la serie respecto al mismo periodo del ciclo anterior, por ejemplo este trimestre contra el mismo trimestre del año pasado, lo que elimina la estacionalidad.
+Los primeros tres son los órdenes no estacionales de siempre. Los siguientes cuatro son sus análogos estacionales: P, D, Q son el AR, la integración y el MA estacionales, y s es el periodo de la estación, por ejemplo 4 en datos trimestrales o 12 en mensuales. La D estacional diferencia la serie respecto al mismo periodo del ciclo anterior, por ejemplo este trimestre frente al mismo trimestre del año previo, lo que elimina la estacionalidad.
 
-El PIB anual no tiene estacionalidad, así que para mostrar SARIMA cambio a una serie trimestral con estacionalidad genuina. Uso datos sintéticos aquí, y lo digo de forma explícita, porque quiero una serie trimestral con un patrón estacional limpio y controlado para que el ejemplo sea didáctico, no por falta de datos reales.
+El PIB anual carece de estacionalidad, de modo que, para ilustrar SARIMA, se cambia a una serie trimestral con estacionalidad genuina. Aquí se utilizan datos sintéticos, lo cual se indica de forma explícita, pues se requiere una serie trimestral con un patrón estacional limpio y controlado para que el ejemplo sea didáctico, no por falta de datos reales.
 
 ```python
 # Datos sintéticos: serie trimestral con tendencia, estacionalidad y ruido
@@ -82,11 +82,11 @@ sarima = SARIMAX(serie_q, order=(1, 1, 1),
 print(f"AIC SARIMA = {sarima.aic:.1f}")
 ```
 
-SARIMA captura a la vez la tendencia creciente y el ciclo de cuatro trimestres. En el trabajo real lo uso para series trimestrales de comercio o producción de los bloques, donde el patrón estacional es fuerte y omitirlo arruina el pronóstico.
+SARIMA captura a la vez la tendencia creciente y el ciclo de cuatro trimestres. En el trabajo real se emplea para series trimestrales de comercio o producción de los bloques, donde el patrón estacional es fuerte y omitirlo arruina el pronóstico.
 
 ## auto_arima: búsqueda automática de órdenes
 
-Elegir p, d, q a mano con la ACF y la PACF funciona, pero es laborioso y subjetivo. En la práctica uso `auto_arima` de la librería `pmdarima`, que busca la mejor combinación de órdenes minimizando un criterio de información, automatizando lo que de otro modo haría a ojo.
+Elegir p, d, q manualmente con la ACF y la PACF funciona, pero resulta laborioso y subjetivo. En la práctica se utiliza `auto_arima` de la librería `pmdarima`, que busca la mejor combinación de órdenes minimizando un criterio de información, automatizando lo que de otro modo se haría por inspección.
 
 ```python
 import pmdarima as pm
@@ -97,16 +97,12 @@ auto = pm.auto_arima(log_pib, seasonal=False, d=None,
 print(auto.summary())
 ```
 
-`auto_arima` no me exime de pensar: sigue siendo mi responsabilidad verificar que la d elegida tenga sentido, que los residuos pasen Ljung-Box y que el modelo no esté sobreajustado. Pero me ahorra la parte mecánica de la búsqueda y suele dar un excelente punto de partida.
+`auto_arima` no exime de criterio: sigue siendo responsabilidad del analista verificar que la d elegida tenga sentido, que los residuos superen Ljung-Box y que el modelo no esté sobreajustado. Pero ahorra la parte mecánica de la búsqueda y suele ofrecer un excelente punto de partida.
 
-## Cierre
+## Bibliografía
 
-ARIMA junta autorregresión, integración y medias móviles, y su orden d incorpora la diferenciación dentro del modelo, resolviendo la no estacionariedad sin trabajo manual. Entrega pronósticos con intervalos, algo esencial para comunicar incertidumbre. SARIMA extiende todo a series estacionales, y `auto_arima` automatiza la selección de órdenes. Lo que falta para cerrar la mecánica es entender mejor las transformaciones que vuelven una serie modelable, en particular la diferenciación y el logaritmo, que sistematizo en la siguiente página.
+ARIMA reúne autorregresión, integración y medias móviles, y su orden d incorpora la diferenciación dentro del modelo, resolviendo la no estacionariedad sin trabajo manual. Entrega pronósticos con intervalos, lo cual es esencial para comunicar incertidumbre. SARIMA extiende todo a series estacionales, y `auto_arima` automatiza la selección de órdenes. Resta comprender mejor las transformaciones que vuelven modelable una serie, en particular la diferenciación y el logaritmo, que se sistematizan en la siguiente página.
 
 ## Referencias
 
-Box, G. E. P., Jenkins, G. M., Reinsel, G. C., & Ljung, G. M. (2015). *Time series analysis: Forecasting and control* (5a ed.). Wiley.
-
-Hyndman, R. J., & Athanasopoulos, G. (2021). *Forecasting: Principles and practice* (3a ed.). OTexts. https://otexts.com/fpp3/
-
-Law, A. M. (2014). *Simulation modeling and analysis* (5a ed.). McGraw-Hill.
+1. Hyndman, R. J., & Athanasopoulos, G. (2021). *Forecasting: Principles and practice* (3a ed.). OTexts. https://otexts.com/fpp3/

@@ -1,12 +1,12 @@
 # 1.4 Método de Heun y Euler mejorado
 
-El problema de Euler es que confía ciegamente en la pendiente del punto de partida y la mantiene durante todo el tramo. Pero la pendiente cambia mientras avanzo. El método de Heun, también llamado Euler mejorado o método del trapecio, corrige esto usando un promedio entre la pendiente del inicio y la del final del tramo. Es el primer salto de calidad real.
+El inconveniente de Euler es que confía por completo en la pendiente del punto de partida y la mantiene durante todo el tramo, cuando en realidad la pendiente cambia a medida que se avanza. El método de Heun, también llamado Euler mejorado o método del trapecio, corrige esto empleando un promedio entre la pendiente del inicio y la del final del tramo. Es el primer salto de calidad significativo.
 
-## La idea: mirar antes de saltar
+## La idea: estimar antes de avanzar
 
-Heun trabaja en dos fases, una predicción y una corrección.
+Heun opera en dos fases, una predicción y una corrección.
 
-Primero hace un paso de Euler común para asomarse a dónde llegaría. A ese punto tentativo lo llamo el predictor:
+Primero ejecuta un paso de Euler ordinario para estimar el punto de llegada. A ese punto tentativo se le denomina predictor:
 
 ```
 y_pred = y_k + h * f(t_k, y_k)
@@ -19,7 +19,7 @@ pendiente_promedio = ( f(t_k, y_k) + f(t_{k+1}, y_pred) ) / 2
 y_{k+1} = y_k + h * pendiente_promedio
 ```
 
-La intuición es la del trapecio en integración: en vez de aproximar el área bajo la curva de la pendiente con un rectángulo, como hace Euler, la aproximo con un trapecio, que se ajusta mucho mejor cuando la pendiente cambia.
+La intuición es la del trapecio en integración: en lugar de aproximar el área bajo la curva de la pendiente con un rectángulo, como hace Euler, se aproxima con un trapecio, que se ajusta mucho mejor cuando la pendiente cambia.
 
 ## Implementación
 
@@ -41,9 +41,9 @@ def integrar(f, y0, t0, t_final, h, paso):
     return t, y
 ```
 
-## Heun contra Euler en el mismo terreno
+## Comparación entre Heun y Euler
 
-Vuelvo al crecimiento exponencial con solución exacta para comparar de frente. Uso el mismo paso para ambos, de modo que la única diferencia sea el método.
+Se retoma el crecimiento exponencial con solución exacta para comparar directamente. Se emplea el mismo paso para ambos, de modo que la única diferencia sea el método.
 
 ```python
 r, y0 = 0.06, 1.0
@@ -59,11 +59,11 @@ print(f"Euler  h=1: error {err_euler:.4%}")
 print(f"Heun   h=1: error {err_heun:.4%}")
 ```
 
-Con el mismo paso de un año, Heun reduce el error del orden de varios puntos porcentuales a una fracción de punto. La diferencia es enorme y el costo es solo una evaluación extra de `f` por paso. En la mayoría de los problemas de negocio ese intercambio vale totalmente la pena.
+Con el mismo paso de un año, Heun reduce el error del orden de varios puntos porcentuales a una fracción de punto. La diferencia es considerable y el costo es solo una evaluación adicional de `f` por paso. En la mayoría de los problemas de negocio ese intercambio resulta plenamente conveniente.
 
 ## Por qué Heun es de orden 2
 
-Heun es un método de orden 2, lo que significa que su error global es proporcional a `h^2`. La consecuencia práctica es importante: si reduzco el paso a la mitad, el error no se reduce a la mitad como en Euler, sino a la cuarta parte. Lo verifico con el mismo barrido de antes:
+Heun es un método de orden 2, lo que significa que su error global es proporcional a `h^2`. La consecuencia práctica es relevante: al reducir el paso a la mitad, el error no se reduce a la mitad como en Euler, sino a la cuarta parte. Esto se verifica con el mismo barrido anterior:
 
 ```python
 for h in [1.0, 0.5, 0.25, 0.125]:
@@ -72,18 +72,12 @@ for h in [1.0, 0.5, 0.25, 0.125]:
     print(f"h={h:6.3f}   error={abs(yh[-1]-ex)/ex:.5%}")
 ```
 
-Cada vez que parto el paso a la mitad, el error cae cuatro veces. Esa es la firma del orden 2. Por una sola evaluación adicional de la función por paso, gano una ley de convergencia cuadrática.
+Cada vez que el paso se reduce a la mitad, el error decae cuatro veces. Esa es la firma del orden 2. Por una sola evaluación adicional de la función por paso, se obtiene una ley de convergencia cuadrática.
 
 ## La lectura para el caso del PIB
 
-Cuando proyecto el PIB de un bloque a treinta años, el sesgo sistemático de Euler hacia abajo se vuelve un problema serio, porque distorsiona justamente la magnitud de la transición que quiero medir. Heun corrige ese sesgo casi por completo al promediar la pendiente de entrada y la de salida del tramo, capturando la curvatura del crecimiento. En un análisis donde la pregunta es cuándo el bloque emergente alcanza al G7, esa corrección puede mover la respuesta varios años, y por eso no es un detalle académico.
+Al proyectar el PIB de un bloque a treinta años, el sesgo sistemático de Euler hacia abajo se vuelve un problema considerable, pues distorsiona justamente la magnitud de la transición por medir. Heun corrige ese sesgo casi por completo al promediar la pendiente de entrada y la de salida del tramo, capturando la curvatura del crecimiento. En un análisis cuya pregunta es cuándo el bloque emergente alcanza al G7, esa corrección puede desplazar la respuesta varios años, por lo que no es un detalle académico.
 
-## Cierre
+## Bibliografía
 
-Heun mejora a Euler usando un promedio entre la pendiente inicial y una pendiente final estimada, lo que lo convierte en un método de orden 2 con convergencia cuadrática a cambio de una sola evaluación extra por paso. La pregunta natural es hasta dónde se puede llevar esta idea de evaluar la pendiente en varios puntos del tramo. La respuesta es Runge-Kutta de orden 4, que evalúa cuatro pendientes y es el caballo de batalla de la simulación continua. Esa es la siguiente página.
-
-## Referencias
-
-Chapra, S. C., & Canale, R. P. (2021). *Numerical methods for engineers* (8a ed.). McGraw-Hill.
-
-Butcher, J. C. (2016). *Numerical methods for ordinary differential equations* (3a ed.). Wiley.
+Heun mejora a Euler empleando un promedio entre la pendiente inicial y una pendiente final estimada, lo que lo convierte en un método de orden 2 con convergencia cuadrática a cambio de una sola evaluación adicional por paso. La pregunta natural es hasta dónde puede llevarse la idea de evaluar la pendiente en varios puntos del tramo. La respuesta es Runge-Kutta de orden 4, que evalúa cuatro pendientes y constituye el caballo de batalla de la simulación continua. Ese es el tema de la siguiente página.

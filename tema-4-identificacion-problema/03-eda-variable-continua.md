@@ -1,10 +1,10 @@
 # 4.3 EDA de una variable continua
 
-El análisis exploratorio de datos, o EDA, es la etapa 2 de la metodología del curso y la que más veces salta la gente con prisa (Law, 2014). Es un error caro. Antes de ajustar cualquier modelo necesito conocer la forma, la dispersión, los valores atípicos y la estructura temporal de mi variable, porque cada una de esas características decide algo del modelado posterior. Este capítulo hace el EDA completo de la variable de estudio.
+El análisis exploratorio de datos, o EDA, es la etapa 2 de la metodología del curso y la que más se omite por prisa. Es un error costoso. Antes de ajustar cualquier modelo es necesario conocer la forma, la dispersión, los valores atípicos y la estructura temporal de la variable, pues cada una de esas características determina algún aspecto del modelado posterior. Este capítulo realiza el EDA completo de la variable de estudio.
 
 ## Los cuatro momentos como brújula
 
-La guía propone leer una variable a través de sus cuatro momentos: media, coeficiente de variación, asimetría y curtosis, y usarlos como guía para entender su forma (Law, 2014). Los calculo para el crecimiento anual del PIB de los BRICS+.
+La guía de estudio propone leer una variable a través de sus cuatro momentos: media, coeficiente de variación, asimetría y curtosis, y usarlos como guía para comprender su forma. Se calculan para el crecimiento anual del PIB de los BRICS+.
 
 ```python
 import wbgapi as wb
@@ -24,11 +24,11 @@ print(f"Asimetría: {stats.skew(crecimiento):.3f}")
 print(f"Curtosis exceso: {stats.kurtosis(crecimiento):.3f}")
 ```
 
-La media me da el ritmo típico de crecimiento del bloque. El coeficiente de variación me dice qué tan volátil es ese crecimiento. La asimetría revela si los choques son más frecuentes hacia abajo, las crisis, que hacia arriba, los auges; en series económicas suele haber asimetría negativa porque las recesiones son abruptas y las expansiones graduales. La curtosis indica si hay colas pesadas, es decir, eventos extremos más frecuentes de lo que una normal predeciría, lo cual es típico de variables financieras y económicas sujetas a crisis.
+La media proporciona el ritmo típico de crecimiento del bloque. El coeficiente de variación indica cuán volátil es ese crecimiento. La asimetría revela si los choques son más frecuentes hacia abajo, las crisis, que hacia arriba, los auges; en series económicas suele haber asimetría negativa, pues las recesiones son abruptas y las expansiones graduales. La curtosis indica si hay colas pesadas, es decir, eventos extremos más frecuentes de lo que una normal predeciría, lo cual es típico de variables financieras y económicas sujetas a crisis.
 
 ## La visualización mínima obligatoria
 
-Hay cuatro gráficos que no me salto nunca con una serie continua.
+Hay cuatro gráficos que no deben omitirse con una serie continua.
 
 ```python
 import matplotlib.pyplot as plt
@@ -52,11 +52,11 @@ plt.tight_layout()
 plt.show()
 ```
 
-La serie en niveles muestra la tendencia y los choques. La tasa de crecimiento muestra la volatilidad y los años negativos. El histograma muestra la forma de la distribución. El gráfico Q-Q contra la normal revela si las colas son más pesadas que las de una normal, lo que se ve cuando los puntos de los extremos se despegan de la línea recta. Estos cuatro juntos me dicen casi todo lo que necesito antes de modelar.
+La serie en niveles muestra la tendencia y los choques. La tasa de crecimiento muestra la volatilidad y los años negativos. El histograma muestra la forma de la distribución. El gráfico Q-Q frente a la normal revela si las colas son más pesadas que las de una normal, lo que se aprecia cuando los puntos de los extremos se despegan de la línea recta. Estos cuatro en conjunto informan casi todo lo necesario antes de modelar.
 
 ## Detección de valores atípicos con sentido económico
 
-En datos económicos, un valor atípico rara vez es un error de medición: suele ser un evento real e importante. La crisis de 2008 y la pandemia de 2020 aparecen como atípicos, pero borrarlos sería falsificar la historia. El EDA no busca eliminar atípicos, busca entenderlos y decidir cómo tratarlos en el modelo.
+En datos económicos, un valor atípico rara vez es un error de medición: suele ser un evento real e importante. La crisis de 2008 y la pandemia de 2020 aparecen como atípicos, pero eliminarlos falsificaría la historia. El EDA no busca eliminar atípicos, sino comprenderlos y decidir cómo tratarlos en el modelo.
 
 ```python
 z = (crecimiento - crecimiento.mean()) / crecimiento.std()
@@ -65,11 +65,11 @@ print("Años atípicos en el crecimiento del bloque:")
 print(atipicos.round(3))
 ```
 
-Cada año que sale como atípico tiene un nombre y una causa: una crisis financiera, una pandemia, un colapso de precios de commodities. La decisión de modelado no es removerlos, sino elegir un modelo que los acomode, por ejemplo usando una transformación que reduzca su influencia o un modelo robusto, y reportar que los choques son parte estructural del fenómeno.
+Cada año que resulta atípico tiene un nombre y una causa: una crisis financiera, una pandemia, un colapso de precios de commodities. La decisión de modelado no es removerlos, sino elegir un modelo que los acomode, por ejemplo mediante una transformación que reduzca su influencia o un modelo robusto, y reportar que los choques son parte estructural del fenómeno.
 
 ## Estructura temporal: lo que el EDA tabular no ve
 
-El EDA de una serie tiene una dimensión que el EDA tabular ignora: la dependencia temporal. Aquí adelanto la ACF del capítulo 2.3 como parte del EDA, porque ver si la serie tiene memoria es tan parte de conocerla como ver su histograma.
+El EDA de una serie tiene una dimensión que el EDA tabular ignora: la dependencia temporal. Aquí se adelanta la ACF del capítulo 2.3 (tema-2-series-de-tiempo/03-acf-pacf.md) como parte del EDA, pues observar si la serie tiene memoria es tan parte de conocerla como observar su histograma.
 
 ```python
 from statsmodels.graphics.tsaplots import plot_acf
@@ -81,16 +81,12 @@ Si la tasa de crecimiento muestra autocorrelación, significa que un año bueno 
 
 ## El EDA cambia la formulación del problema
 
-Un punto que aprendí en proyectos reales: el EDA muchas veces obliga a volver a la etapa de formulación. Si en el EDA descubro que la varianza crece con el nivel, sé que necesitaré transformación logarítmica. Si descubro colas pesadas, sé que los intervalos basados en normalidad subestimarán el riesgo. Si descubro pocos datos comparables para el bloque ampliado, sé que debo moderar el horizonte. El EDA no es un trámite previo al modelo, es un diálogo con el problema que a veces lo redefine, lo cual es justo la iteración que describe la metodología (Law, 2014).
+Un punto observado en proyectos reales: el EDA con frecuencia obliga a regresar a la etapa de formulación. Si en el EDA se descubre que la varianza crece con el nivel, se sabe que se requerirá transformación logarítmica. Si se descubren colas pesadas, se sabe que los intervalos basados en normalidad subestimarán el riesgo. Si se descubren pocos datos comparables para el bloque ampliado, se sabe que debe moderarse el horizonte. El EDA no es un trámite previo al modelo, sino un diálogo con el problema que a veces lo redefine, lo cual es justamente la iteración que describe la metodología.
 
-## Cierre
+## Bibliografía
 
-El EDA de una variable continua lee sus cuatro momentos, la visualiza en niveles, en tasa, en distribución y contra la normal, entiende sus atípicos como eventos reales en vez de borrarlos, y examina su estructura temporal. Hecho con seriedad, el EDA orienta cada decisión posterior de modelado y a veces redefine el problema. Con el problema formulado y los datos comprendidos, el siguiente capítulo cierra el Tema 4 escribiendo la definición formal del problema del PIB como documento.
+El EDA de una variable continua lee sus cuatro momentos, la visualiza en niveles, en tasa, en distribución y frente a la normal, comprende sus atípicos como eventos reales en lugar de eliminarlos, y examina su estructura temporal. Realizado con seriedad, el EDA orienta cada decisión posterior de modelado y a veces redefine el problema. Con el problema formulado y los datos comprendidos, el siguiente capítulo cierra el Tema 4 redactando la definición formal del problema del PIB como documento.
 
 ## Referencias
 
-Law, A. M. (2014). *Simulation modeling and analysis* (5a ed.). McGraw-Hill.
-
-Tukey, J. W. (1977). *Exploratory data analysis*. Addison-Wesley.
-
-Hyndman, R. J., & Athanasopoulos, G. (2021). *Forecasting: Principles and practice* (3a ed.). OTexts. https://otexts.com/fpp3/
+1. Hyndman, R. J., & Athanasopoulos, G. (2021). *Forecasting: Principles and practice* (3a ed.). OTexts. https://otexts.com/fpp3/

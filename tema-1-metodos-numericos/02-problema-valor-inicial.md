@@ -1,42 +1,42 @@
 # 1.2 El problema de valor inicial y la discretización
 
-En la página anterior llegué a la forma estándar de una ODE. Ahora le pongo nombre completo al problema y explico la idea que comparten todos los métodos numéricos que vienen después: la discretización.
+En la página anterior se llegó a la forma estándar de una ODE. A continuación se nombra el problema en su forma completa y se expone la idea que comparten todos los métodos numéricos que vienen después: la discretización.
 
 ## El problema de valor inicial
 
-Un problema de valor inicial, o PVI, son dos cosas juntas:
+Un problema de valor inicial, o PVI, está compuesto por dos elementos:
 
 ```
 dy/dt = f(t, y)        la ley del sistema
 y(t0) = y0             el punto de partida
 ```
 
-La ley sola no basta. La ecuación `dy/dt = r*y` describe infinitas economías que crecen a la misma tasa pero parten de tamaños distintos. Lo que selecciona una trayectoria concreta es la condición inicial. Esto tiene una lectura que me gusta para el caso de los bloques: dos países pueden compartir la misma dinámica de crecimiento y terminar en lugares radicalmente distintos solo por dónde arrancaron. La historia importa, y en una ODE la historia entra por `y0`.
+La ley por sí sola no basta. La ecuación `dy/dt = r*y` describe infinitas economías que crecen a la misma tasa pero parten de tamaños distintos. Lo que selecciona una trayectoria concreta es la condición inicial. Esto admite una lectura pertinente para el caso de los bloques: dos países pueden compartir la misma dinámica de crecimiento y terminar en posiciones radicalmente distintas únicamente por el punto en que arrancaron. La historia importa, y en una ODE la historia entra por `y0`.
 
-## Por qué no podemos resolverlo de forma exacta en la computadora
+## Por qué no se resuelve de forma exacta en la computadora
 
-La computadora no sabe de infinito. No puede recorrer un continuo de instantes entre `t0` y el horizonte final. Solo sabe hacer operaciones discretas, una tras otra. Entonces, en lugar de la trayectoria continua `y(t)`, vamos a calcular una secuencia de puntos
+La computadora no opera con el infinito. No puede recorrer un continuo de instantes entre `t0` y el horizonte final. Solo puede ejecutar operaciones discretas, una tras otra. Por ello, en lugar de la trayectoria continua `y(t)`, se calcula una secuencia de puntos
 
 ```
 t0, t1, t2, ..., tN
 y0, y1, y2, ..., yN
 ```
 
-donde cada `yk` es una aproximación de `y(tk)`. Pasar del problema continuo a esta secuencia de puntos es lo que se llama discretizar. Es la misma idea que cuando dibujamos una curva en pantalla: no trazamos la curva real, trazamos muchos puntos cercanos y el ojo los une.
+donde cada `yk` es una aproximación de `y(tk)`. El paso del problema continuo a esta secuencia de puntos se denomina discretizar. Es la misma idea de cuando se dibuja una curva en pantalla: no se traza la curva real, sino muchos puntos cercanos que el ojo une.
 
 ## El paso de integración
 
-El parámetro que controla todo es el paso de integración, que voy a llamar `h`. Es la distancia temporal entre dos puntos consecutivos:
+El parámetro que controla todo el proceso es el paso de integración, denotado `h`. Es la distancia temporal entre dos puntos consecutivos:
 
 ```
 t_{k+1} = t_k + h
 ```
 
-Un paso chico significa muchos puntos, más cómputo y, en general, más precisión. Un paso grande significa pocos puntos, cómputo barato y más error. Toda la ingeniería de los métodos numéricos es, en el fondo, sacarle la máxima precisión a un paso dado. Un buen método de paso grande puede ser más preciso que un método malo de paso chico, y eso es exactamente lo que voy a mostrar comparando Euler con Runge-Kutta más adelante.
+Un paso pequeño implica muchos puntos, mayor cómputo y, en general, mayor precisión. Un paso grande implica pocos puntos, cómputo económico y mayor error. Toda la ingeniería de los métodos numéricos consiste, en el fondo, en extraer la máxima precisión de un paso dado. Un buen método con paso grande puede superar en precisión a un método deficiente con paso pequeño, como se muestra al comparar Euler con Runge-Kutta más adelante.
 
 ## La idea común a todos los métodos: avanzar usando la pendiente
 
-Todos los métodos de un paso comparten la misma estructura. Estoy parado en `(t_k, y_k)`. La ODE me dice la pendiente exacta en ese punto, porque `f(t_k, y_k)` es justamente `dy/dt` ahí. Si me muevo en línea recta con esa pendiente durante un tramo `h`, llego a una estimación del siguiente punto. La diferencia entre métodos es solo qué pendiente usan: la del punto de partida, un promedio de varias, o una combinación pesada de pendientes evaluadas en puntos intermedios. Pero la columna vertebral es siempre la misma:
+Todos los métodos de un paso comparten la misma estructura. Se parte del punto `(t_k, y_k)`. La ODE proporciona la pendiente exacta en ese punto, pues `f(t_k, y_k)` es justamente `dy/dt` allí. Al avanzar en línea recta con esa pendiente durante un tramo `h`, se obtiene una estimación del siguiente punto. La diferencia entre métodos radica únicamente en qué pendiente emplean: la del punto de partida, un promedio de varias, o una combinación ponderada de pendientes evaluadas en puntos intermedios. La estructura central es siempre la misma:
 
 ```
 y_{k+1} = y_k + h * (alguna pendiente representativa del tramo)
@@ -44,7 +44,7 @@ y_{k+1} = y_k + h * (alguna pendiente representativa del tramo)
 
 ## Un esqueleto genérico en Python
 
-Para que la estructura quede explícita antes de ver los métodos concretos, dejo el esqueleto de un integrador de un paso. Los capítulos siguientes solo van a cambiar la función `paso`.
+Para que la estructura quede explícita antes de presentar los métodos concretos, se incluye el esqueleto de un integrador de un paso. Los capítulos siguientes solo modifican la función `paso`.
 
 ```python
 import numpy as np
@@ -64,16 +64,10 @@ Con este esqueleto, implementar un método numérico se reduce a escribir su fun
 
 ## El error de discretización
 
-Al reemplazar la curva por una secuencia de segmentos rectos introduzco un error. Hay dos errores que conviene distinguir desde ya, porque vuelven en el capítulo de estabilidad.
+Al reemplazar la curva por una secuencia de segmentos rectos se introduce un error. Conviene distinguir desde ya dos errores, pues reaparecen en el capítulo de estabilidad.
 
-El error local es el que cometo en un solo paso, suponiendo que partí del valor exacto. El error global es el acumulado tras recorrer todo el horizonte. La relación entre ambos no es trivial, porque los errores se pueden amplificar de un paso al siguiente. Un método se llama de orden p cuando su error global se reduce proporcionalmente a `h^p`. Euler es de orden 1, Heun de orden 2, Runge-Kutta clásico de orden 4. Cuanto mayor el orden, más rápido cae el error cuando reduzco el paso, y por eso vale la pena el cómputo extra de los métodos de orden alto.
+El error local es el que se comete en un solo paso, suponiendo partir del valor exacto. El error global es el acumulado tras recorrer todo el horizonte. La relación entre ambos no es trivial, pues los errores pueden amplificarse de un paso al siguiente. Un método se denomina de orden p cuando su error global se reduce proporcionalmente a `h^p`. Euler es de orden 1, Heun de orden 2, Runge-Kutta clásico de orden 4. Cuanto mayor el orden, más rápido decae el error al reducir el paso, lo que justifica el cómputo adicional de los métodos de orden alto.
 
-## Cierre
+## Bibliografía
 
-El problema de valor inicial es la ley más la condición inicial. Lo resolvemos discretizando el tiempo en pasos de tamaño `h` y avanzando con la pendiente que da la ODE. Todos los métodos comparten esa arquitectura y se diferencian solo en cómo eligen la pendiente del tramo. En la siguiente página implemento el más simple de todos, el método de Euler, que es la versión más literal de esta idea.
-
-## Referencias
-
-Chapra, S. C., & Canale, R. P. (2021). *Numerical methods for engineers* (8a ed.). McGraw-Hill.
-
-Law, A. M. (2014). *Simulation modeling and analysis* (5a ed.). McGraw-Hill.
+El problema de valor inicial es la ley más la condición inicial. Se resuelve discretizando el tiempo en pasos de tamaño `h` y avanzando con la pendiente que proporciona la ODE. Todos los métodos comparten esa arquitectura y difieren únicamente en cómo eligen la pendiente del tramo. En la siguiente página se implementa el más simple de todos, el método de Euler, que es la versión más literal de esta idea.
