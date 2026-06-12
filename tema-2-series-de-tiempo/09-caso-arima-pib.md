@@ -1,6 +1,6 @@
 # 2.9 Caso: ARIMA sobre el PIB de BRICS+ y G7
 
-Cierro el Tema 2 con el caso integrador de la rama estadística. Voy a construir las dos series agregadas, BRICS+ y G7, ajustar un modelo ARIMA a cada una con todo el flujo de preprocesamiento y validación, proyectar ambas hacia adelante con intervalos, y leer qué dice el modelo sobre el momento en que las trayectorias se cruzan. Es el espejo del caso de la ODE del Tema 1, ahora sin postular ninguna ley del sistema.
+El Tema 2 cierra con el caso integrador de la rama estadística. Se construyen las dos series agregadas, BRICS+ y G7, se ajusta un modelo ARIMA a cada una con todo el flujo de preprocesamiento y validación, se proyectan ambas hacia adelante con intervalos, y se interpreta qué indica el modelo sobre el momento en que las trayectorias se cruzan. Es el espejo del caso de la ODE del Tema 1, ahora sin postular ninguna ley del sistema.
 
 ## Construcción de las dos series
 
@@ -25,11 +25,11 @@ panel.index = pd.PeriodIndex(panel.index, freq="Y")
 print(panel.tail())
 ```
 
-Uso PIB a precios corrientes en dólares. Vale una advertencia que retomo en el Tema 6: medir en dólares corrientes favorece al G7, porque buena parte del producto de los BRICS+ se valora mejor en paridad de poder adquisitivo. Lo dejo así en este caso por simplicidad y lo problematizo después, porque la elección de la unidad de medida es, ella misma, una decisión cargada de implicaciones.
+Se utiliza PIB a precios corrientes en dólares. Conviene una advertencia que se retoma en el Tema 6: medir en dólares corrientes favorece al G7, pues buena parte del producto de los BRICS+ se valora mejor en paridad de poder adquisitivo. Se mantiene así en este caso por simplicidad y se problematiza después, pues la elección de la unidad de medida es, en sí misma, una decisión cargada de implicaciones.
 
 ## Preprocesamiento y selección de orden
 
-Aplico el flujo del capítulo 2.7 a cada bloque: logaritmo para la varianza, prueba de estacionariedad, y selección automática de orden.
+Se aplica el flujo del capítulo 2.7 (tema-2-series-de-tiempo/07-diferenciacion-transformaciones.md) a cada bloque: logaritmo para la varianza, prueba de estacionariedad y selección automática de orden.
 
 ```python
 import pmdarima as pm
@@ -49,11 +49,11 @@ print("Orden BRICS+:", m_brics.order)
 print("Orden G7:    ", m_g7.order)
 ```
 
-Cada bloque puede recibir un orden distinto, y eso es correcto: no hay razón para forzar la misma estructura a dos economías con dinámicas diferentes. El bloque emergente, con crecimiento más volátil, suele requerir una estructura distinta a la del bloque maduro, más inercial.
+Cada bloque puede recibir un orden distinto, y eso es correcto: no hay razón para imponer la misma estructura a dos economías con dinámicas diferentes. El bloque emergente, de crecimiento más volátil, suele requerir una estructura distinta a la del bloque maduro, más inercial.
 
 ## Validación antes de proyectar
 
-No proyecto sin antes medir el error fuera de muestra con un corte temporal, según el capítulo 2.8.
+No se proyecta sin antes medir el error fuera de muestra con un corte temporal, según el capítulo 2.8 (tema-2-series-de-tiempo/08-validacion-metricas.md).
 
 ```python
 def validar(log_s, order, corte=2016):
@@ -70,7 +70,7 @@ print(f"MAPE BRICS+: {validar(log_brics, m_brics.order):.2%}")
 print(f"MAPE G7:     {validar(log_g7, m_g7.order):.2%}")
 ```
 
-Si el MAPE fuera de muestra es bajo, gano confianza para proyectar. Si fuera alto, el modelo no está listo y volvería a etapas anteriores, que es la iteración que la guía del curso describe como propia de la metodología de modelado (Law, 2014).
+Si el MAPE fuera de muestra es bajo, se gana confianza para proyectar. Si fuera alto, el modelo no está listo y correspondería volver a etapas anteriores, que es la iteración que la guía de estudio describe como propia de la metodología de modelado.
 
 ## Proyección de las dos trayectorias
 
@@ -109,20 +109,16 @@ else:
     print("El modelo no proyecta cruce dentro del horizonte en dólares corrientes")
 ```
 
-Aquí hay que ser muy cuidadoso, y es justo el tipo de cuidado que desarrollo en el Tema 6. Medido en dólares corrientes, el cruce puede no aparecer en el horizonte, mientras que medido en paridad de poder adquisitivo el bloque BRICS+ ya superó al G7 hace años según varias fuentes. El modelo no miente, pero responde exactamente la pregunta que se le hizo, y esa pregunta incluye la unidad de medida. Cambiar de dólares corrientes a PPP cambia la conclusión geopolítica, y un analista honesto reporta ambas.
+Aquí se requiere especial cautela, y es justamente el tipo de cautela que se desarrolla en el Tema 6. Medido en dólares corrientes, el cruce puede no aparecer en el horizonte, mientras que medido en paridad de poder adquisitivo el bloque BRICS+ ya superó al G7 hace años según varias fuentes. El modelo no engaña, pero responde exactamente la pregunta que se le formuló, y esa pregunta incluye la unidad de medida. Cambiar de dólares corrientes a PPP cambia la conclusión geopolítica, y un análisis honesto reporta ambas.
 
 ## ODE contra ARIMA: dos lentes sobre el mismo fenómeno
 
-Vale comparar lo que cada rama aportó sobre el mismo PIB de BRICS+. La ODE logística del Tema 1 dio un mecanismo interpretable, motor de crecimiento más techo estructural, con dos parámetros con significado económico, pero sin incertidumbre. El ARIMA de este capítulo no da mecanismo, pero da pronósticos con intervalos que cuantifican cuánto no sabemos, y se adapta a la dinámica observada sin que yo imponga una forma. Ninguna es la verdadera. Son lentes complementarios, y en el Tema 5 los comparo formalmente para decidir cuándo conviene cada uno.
+Conviene comparar lo que cada rama aportó sobre el mismo PIB de BRICS+. La ODE logística del Tema 1 ofreció un mecanismo interpretable, motor de crecimiento más techo estructural, con dos parámetros de significado económico, pero sin incertidumbre. El ARIMA de este capítulo no ofrece mecanismo, pero entrega pronósticos con intervalos que cuantifican el grado de desconocimiento, y se adapta a la dinámica observada sin imponer una forma. Ninguna es la verdadera. Son lentes complementarios, y en el Tema 5 se comparan formalmente para decidir cuándo conviene cada uno.
 
-## Cierre del Tema 2
+## Bibliografía del Tema 2
 
-Recorrí la rama estadística completa: de los componentes de una serie a la estacionariedad, de la ACF y PACF a los modelos AR, MA, ARMA, ARIMA y SARIMA, de las transformaciones a la validación temporal honesta, y de ahí a un caso real con datos del Banco Mundial sobre la transición BRICS+ frente a G7. Las dos ramas de los sistemas continuos, la mecanicista y la estadística, ya están sobre la mesa. El Tema 3 las conecta con lo que de verdad importa en mi profesión: una decisión de negocio.
+Se recorrió la rama estadística completa: de los componentes de una serie a la estacionariedad, de la ACF y PACF a los modelos AR, MA, ARMA, ARIMA y SARIMA, de las transformaciones a la validación temporal honesta, y de ahí a un caso real con datos del Banco Mundial sobre la transición BRICS+ frente a G7. Las dos ramas de los sistemas continuos, la mecanicista y la estadística, ya están sobre la mesa. El Tema 3 las conecta con lo que realmente importa en la práctica profesional: una decisión de negocio.
 
 ## Referencias
 
-Box, G. E. P., Jenkins, G. M., Reinsel, G. C., & Ljung, G. M. (2015). *Time series analysis: Forecasting and control* (5a ed.). Wiley.
-
-Banco Mundial. (2024). *World Development Indicators* [Conjunto de datos]. https://databank.worldbank.org/source/world-development-indicators
-
-Law, A. M. (2014). *Simulation modeling and analysis* (5a ed.). McGraw-Hill.
+1. Banco Mundial. (2024). *World Development Indicators* [Conjunto de datos]. https://databank.worldbank.org/source/world-development-indicators

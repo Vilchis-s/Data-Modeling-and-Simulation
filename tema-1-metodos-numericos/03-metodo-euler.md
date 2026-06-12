@@ -1,16 +1,16 @@
 # 1.3 Método de Euler
 
-El método de Euler es el integrador más simple que existe y, justamente por eso, es el mejor punto de entrada. Es la traducción más literal de la idea de avanzar usando la pendiente que da la ODE. Todo lo que viene después son refinamientos de esta misma intuición.
+El método de Euler es el integrador más simple que existe y, por esa razón, el mejor punto de entrada. Es la traducción más literal de la idea de avanzar usando la pendiente que proporciona la ODE. Todo lo que sigue son refinamientos de esta misma intuición.
 
 ## La regla
 
-Estoy en `(t_k, y_k)`. La ODE me da la pendiente exacta ahí: `f(t_k, y_k)`. Euler supone que esa pendiente se mantiene constante durante todo el tramo `h` y avanza en línea recta:
+Se parte del punto `(t_k, y_k)`. La ODE proporciona la pendiente exacta allí: `f(t_k, y_k)`. Euler supone que esa pendiente se mantiene constante durante todo el tramo `h` y avanza en línea recta:
 
 ```
 y_{k+1} = y_k + h * f(t_k, y_k)
 ```
 
-Eso es todo. Geométricamente, estoy reemplazando la curva real por su recta tangente en cada punto. El error nace de que la curva se va curvando mientras yo avanzo recto, así que me desvío un poco en cada paso, y esos desvíos se acumulan.
+Eso es todo. Geométricamente, se reemplaza la curva real por su recta tangente en cada punto. El error surge de que la curva se va curvando mientras el avance es recto, de modo que en cada paso se produce una desviación, y esas desviaciones se acumulan.
 
 ## Implementación
 
@@ -31,9 +31,9 @@ def integrar(f, y0, t0, t_final, h, paso):
     return t, y
 ```
 
-## Probándolo donde sí conozco la respuesta
+## Evaluación sobre un caso de solución conocida
 
-Para medir qué tan bueno es un método numérico necesito un caso con solución exacta. El crecimiento exponencial es perfecto porque ya conozco la solución cerrada `y(t) = y0 * exp(r*t)`. Voy a usar una tasa realista, del orden de la que tuvo India en su mejor década, y comparar Euler contra la verdad.
+Para medir la calidad de un método numérico se requiere un caso con solución exacta. El crecimiento exponencial es idóneo, pues se conoce la solución cerrada `y(t) = y0 * exp(r*t)`. Se emplea una tasa realista, del orden de la que registró India en su mejor década, y se compara Euler con el valor verdadero.
 
 ```python
 r = 0.06           # tasa anual tipo economía emergente
@@ -47,15 +47,15 @@ error_final = abs(y_eu[-1] - y_exacta[-1]) / y_exacta[-1]
 print(f"Error relativo a 30 años con h=1: {error_final:.3%}")
 ```
 
-Con paso anual el error final ronda el 2 a 3 por ciento. No es catastrófico, pero tampoco es despreciable cuando hablamos de proyectar PIB a tres décadas, donde un par de puntos porcentuales son cientos de miles de millones de dólares.
+Con paso anual el error final ronda el 2 a 3 por ciento. No es catastrófico, pero tampoco despreciable al proyectar PIB a tres décadas, donde un par de puntos porcentuales equivalen a cientos de miles de millones de dólares.
 
-## La sistemática del error: Euler siempre se queda corto en lo convexo
+## El carácter sistemático del error
 
-Hay un detalle que vale la pena ver porque revela el carácter del método. En una curva convexa que crece, como la exponencial, la tangente siempre va por debajo de la curva. Entonces Euler subestima de forma sistemática: paso a paso se queda corto. No es ruido aleatorio, es un sesgo direccional. Esto importa para el caso del PIB, porque significa que un Euler ingenuo tendería a infravalorar el crecimiento del bloque emergente, justo al revés de lo que uno querría al estimar una transición de poder.
+Existe un detalle que conviene observar, pues revela el carácter del método. En una curva convexa creciente, como la exponencial, la tangente queda siempre por debajo de la curva. En consecuencia, Euler subestima de forma sistemática: paso a paso se queda corto. No se trata de ruido aleatorio, sino de un sesgo direccional. Esto importa para el caso del PIB, pues implica que un Euler ingenuo tendería a infravalorar el crecimiento del bloque emergente, justo lo contrario de lo deseable al estimar una transición de poder.
 
-## El orden 1 en acción: reducir el paso a la mitad reduce el error a la mitad
+## El orden 1 en la práctica
 
-Euler es un método de orden 1, lo que significa que su error global es proporcional a `h`. Si reduzco el paso a la mitad, el error se reduce aproximadamente a la mitad. Lo compruebo barriendo varios pasos:
+Euler es un método de orden 1, lo que significa que su error global es proporcional a `h`. Al reducir el paso a la mitad, el error se reduce aproximadamente a la mitad. Esto se comprueba barriendo varios pasos:
 
 ```python
 for h in [1.0, 0.5, 0.25, 0.125]:
@@ -65,18 +65,12 @@ for h in [1.0, 0.5, 0.25, 0.125]:
     print(f"h={h:6.3f}   error relativo={err:.4%}")
 ```
 
-La salida muestra que el error cae casi exactamente en proporción al paso. Esa es la firma del orden 1. El problema es que para ganar un dígito de precisión necesito diez veces más cómputo, lo cual es muy caro. Los métodos de orden alto del próximo capítulo rompen ese intercambio: con Runge-Kutta de orden 4, reducir el paso a la mitad reduce el error dieciséis veces.
+La salida muestra que el error decae casi exactamente en proporción al paso. Esa es la firma del orden 1. El inconveniente es que ganar un dígito de precisión exige diez veces más cómputo, lo cual resulta muy costoso. Los métodos de orden alto del siguiente capítulo rompen ese intercambio: con Runge-Kutta de orden 4, reducir el paso a la mitad reduce el error dieciséis veces.
 
-## Cuándo Euler es suficiente y cuándo no
+## Cuándo es suficiente Euler y cuándo no
 
-Euler sirve para prototipar rápido, para entender la dinámica cualitativa de un sistema y para horizontes cortos donde el error no alcanza a acumularse. No sirve para proyecciones largas que exijan precisión, ni para sistemas rígidos donde se vuelve inestable, algo que trato en el capítulo de estabilidad. En la práctica profesional casi nunca uso Euler explícito para entregar un resultado, pero siempre lo implemento primero para tener una referencia contra la cual juzgar métodos mejores.
+Euler sirve para prototipar con rapidez, para comprender la dinámica cualitativa de un sistema y para horizontes cortos donde el error no alcanza a acumularse. No sirve para proyecciones largas que exijan precisión, ni para sistemas rígidos donde se vuelve inestable, aspecto que se trata en el capítulo de estabilidad. En la práctica profesional rara vez se utiliza Euler explícito para entregar un resultado, pero conviene implementarlo primero para disponer de una referencia frente a la cual juzgar métodos superiores.
 
-## Cierre
+## Bibliografía
 
-El método de Euler avanza usando la pendiente del punto de partida y nada más. Es intuitivo, barato y de orden 1, lo que lo hace impreciso para horizontes largos. Su error es sistemático, no aleatorio. La forma de mejorar sin pagar el precio de un paso diminuto es usar mejor información sobre la pendiente del tramo, y eso es lo que hace el método de Heun en la siguiente página.
-
-## Referencias
-
-Chapra, S. C., & Canale, R. P. (2021). *Numerical methods for engineers* (8a ed.). McGraw-Hill.
-
-Butcher, J. C. (2016). *Numerical methods for ordinary differential equations* (3a ed.). Wiley.
+El método de Euler avanza usando la pendiente del punto de partida y nada más. Es intuitivo, económico y de orden 1, lo que lo hace impreciso para horizontes largos. Su error es sistemático, no aleatorio. La forma de mejorar sin pagar el precio de un paso diminuto es emplear mejor información sobre la pendiente del tramo, que es lo que hace el método de Heun en la siguiente página.

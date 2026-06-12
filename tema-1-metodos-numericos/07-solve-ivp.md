@@ -1,10 +1,10 @@
 # 1.7 Integradores de SciPy: solve_ivp
 
-Implementar Euler, Heun y RK4 a mano fue necesario para entender qué pasa por dentro. Pero en el trabajo real no reimplemento integradores: uso `scipy.integrate.solve_ivp`, que trae métodos adaptativos de calidad profesional, control automático de paso y soporte para sistemas rígidos. El árbol de decisión de la guía del curso apunta exactamente aquí cuando dice que, ante un sistema continuo con ecuaciones conocidas, la herramienta es `scipy.integrate` (Law, 2014).
+Implementar Euler, Heun y RK4 manualmente fue necesario para comprender su funcionamiento interno. En el trabajo real, sin embargo, no se reimplementan integradores: se utiliza `scipy.integrate.solve_ivp`, que ofrece métodos adaptativos de calidad profesional, control automático de paso y soporte para sistemas rígidos. El árbol de decisión de la guía de estudio apunta precisamente aquí cuando indica que, ante un sistema continuo con ecuaciones conocidas, la herramienta es `scipy.integrate`.
 
 ## La interfaz básica
 
-`solve_ivp` recibe la función `f(t, y)`, el intervalo de integración, la condición inicial y, opcionalmente, los puntos donde quiero la solución evaluada. La función debe devolver la derivada, y la condición inicial siempre va como un arreglo, aun cuando haya una sola variable.
+`solve_ivp` recibe la función `f(t, y)`, el intervalo de integración, la condición inicial y, opcionalmente, los puntos donde se desea evaluar la solución. La función debe devolver la derivada, y la condición inicial se pasa siempre como un arreglo, aun cuando exista una sola variable.
 
 ```python
 import numpy as np
@@ -18,7 +18,7 @@ sol = solve_ivp(
     f,
     t_span=(0, 30),          # integra de t=0 a t=30
     y0=[1.0],                # condición inicial como lista
-    t_eval=np.linspace(0, 30, 31),  # puntos donde quiero la salida
+    t_eval=np.linspace(0, 30, 31),  # puntos donde se desea la salida
     method="RK45",           # Runge-Kutta adaptativo, el default
     rtol=1e-8, atol=1e-10,   # tolerancias de error
 )
@@ -27,38 +27,38 @@ print(sol.y[0][-1])          # valor final
 print(sol.success)           # True si convergió
 ```
 
-El método por defecto, `RK45`, es un Runge-Kutta adaptativo que ajusta el paso solo. Internamente hace lo que en el capítulo anterior hacía a mano comparando dos resoluciones, pero de forma continua y mucho más fina: estima el error local en cada paso y encoge o agranda `h` para mantenerlo dentro de las tolerancias `rtol` y `atol`. Yo solo fijo cuánta precisión quiero, no el paso.
+El método por defecto, `RK45`, es un Runge-Kutta adaptativo que ajusta el paso de forma automática. Internamente realiza lo que en el capítulo anterior se hacía manualmente al comparar dos resoluciones, pero de manera continua y mucho más fina: estima el error local en cada paso y reduce o amplía `h` para mantenerlo dentro de las tolerancias `rtol` y `atol`. Solo se fija cuánta precisión se desea, no el paso.
 
 ## Qué hace un integrador por dentro, en términos simples
 
-Vale la pena entender la idea de fondo de un integrador adaptativo, sin entrar en la matemática, porque es lo que separa una herramienta profesional de los métodos a mano del inicio del tema. La intuición es la misma que usé al final del capítulo de estabilidad, cuando comparaba la solución con paso `h` y con paso `h/2`: si los dos resultados casi coinciden, el paso es lo bastante fino; si difieren mucho, el paso es demasiado grande.
+Conviene comprender la idea de fondo de un integrador adaptativo, sin entrar en la matemática, pues es lo que distingue una herramienta profesional de los métodos manuales del inicio del tema. La intuición es la misma que se empleó al final del capítulo de estabilidad, al comparar la solución con paso `h` y con paso `h/2`: si ambos resultados casi coinciden, el paso es suficientemente fino; si difieren de forma apreciable, el paso es demasiado grande.
 
-Un integrador adaptativo automatiza exactamente esa idea, pero en cada paso y de forma mucho más eficiente. En cada tramo calcula la solución de dos maneras ligeramente distintas y mide cuánto se separan una de otra. Esa separación es su estimación del error que está cometiendo en ese paso. Si la estimación es mayor de lo que yo permití, el integrador rechaza el paso, lo encoge y lo vuelve a intentar; si es mucho menor, agranda el paso siguiente para no desperdiciar cómputo. Así, el método busca solo el tamaño de paso más grande que todavía cumple con la precisión que pedí.
+Un integrador adaptativo automatiza exactamente esa idea, pero en cada paso y de forma mucho más eficiente. En cada tramo calcula la solución de dos maneras ligeramente distintas y mide cuánto se separan entre sí. Esa separación es su estimación del error cometido en ese paso. Si la estimación supera lo permitido, el integrador rechaza el paso, lo reduce y lo reintenta; si es mucho menor, amplía el paso siguiente para no desperdiciar cómputo. De este modo, el método busca el tamaño de paso más grande que aún cumple con la precisión solicitada.
 
-La precisión que pido se controla con dos números, las tolerancias `rtol` y `atol`. La tolerancia relativa `rtol` dice cuánto error acepto en proporción al tamaño de la solución, y es la que más uso porque escala bien cuando la variable crece, como el PIB. La tolerancia absoluta `atol` dice cuánto error acepto en términos absolutos, y sirve sobre todo para que el método no se vuelva loco buscando precisión imposible cuando la solución pasa cerca de cero. Bajar estas tolerancias me da más precisión a cambio de más cómputo, y subirlas hace lo contrario. La gran ventaja es que yo razono en términos de cuánta precisión necesito para mi decisión, no en términos de un paso que tendría que adivinar.
+La precisión solicitada se controla con dos números, las tolerancias `rtol` y `atol`. La tolerancia relativa `rtol` indica cuánto error se acepta en proporción al tamaño de la solución, y es la de uso más frecuente, pues escala adecuadamente cuando la variable crece, como el PIB. La tolerancia absoluta `atol` indica cuánto error se acepta en términos absolutos, y sirve sobre todo para evitar que el método persiga una precisión imposible cuando la solución pasa cerca de cero. Reducir estas tolerancias aumenta la precisión a cambio de mayor cómputo, y aumentarlas produce el efecto contrario. La ventaja principal es que el razonamiento se hace en términos de cuánta precisión exige la decisión, no en términos de un paso que habría que adivinar.
 
 ## Por qué el control adaptativo importa
 
-El paso fijo es un compromiso torpe. En las zonas donde la solución es suave desperdicio cómputo con pasos chicos, y en las zonas donde cambia rápido me quedo corto. Un integrador adaptativo usa pasos grandes donde puede y chicos donde debe. Para el PIB esto significa que puede avanzar holgado en periodos de crecimiento estable y afinar el paso alrededor de un choque abrupto, como una crisis, sin que yo tenga que intervenir.
+El paso fijo es un compromiso poco eficiente. En las zonas donde la solución es suave se desperdicia cómputo con pasos pequeños, y en las zonas donde cambia rápido se queda corto. Un integrador adaptativo emplea pasos grandes donde puede y pequeños donde debe. Para el PIB, esto implica que puede avanzar con holgura en periodos de crecimiento estable y afinar el paso alrededor de un choque abrupto, como una crisis, sin intervención manual.
 
-## Eligiendo el método según el problema
+## Elección del método según el problema
 
-`solve_ivp` ofrece varios métodos y elegir bien es parte del oficio:
+`solve_ivp` ofrece varios métodos, y elegir adecuadamente forma parte del oficio:
 
 ```
-RK45    Runge-Kutta adaptativo. Default. Sirve para casi todo lo no rígido.
-RK23    Orden más bajo, más barato, para precisión modesta.
-DOP853  Orden 8, para cuando necesito precisión muy alta.
+RK45    Runge-Kutta adaptativo. Default. Apto para casi todo lo no rígido.
+RK23    Orden más bajo, más económico, para precisión modesta.
+DOP853  Orden 8, para precisión muy alta.
 Radau   Implícito, para sistemas rígidos.
 BDF     Implícito multipaso, también para sistemas rígidos.
-LSODA   Detecta rigidez sola y cambia de método. Buen comodín.
+LSODA   Detecta rigidez por sí mismo y cambia de método. Buen comodín.
 ```
 
-La regla que sigo es simple. Empiezo con `RK45`. Si la integración se vuelve lentísima o falla, sospecho rigidez y cambio a `Radau` o `BDF`. Si no sé, uso `LSODA`, que decide solo. Esto evita el desastre de inestabilidad del capítulo anterior, porque los métodos implícitos son estables sin importar el paso.
+La regla práctica es sencilla. Se comienza con `RK45`. Si la integración se vuelve muy lenta o falla, se sospecha rigidez y se cambia a `Radau` o `BDF`. En caso de duda, se utiliza `LSODA`, que decide de forma automática. Esto evita el problema de inestabilidad del capítulo anterior, pues los métodos implícitos son estables sin importar el paso.
 
 ## Sistemas de varias ecuaciones
 
-La mayoría de los fenómenos interesantes no son una variable aislada sino varias acopladas. `solve_ivp` maneja sistemas sin esfuerzo extra: la función devuelve un vector de derivadas. Lo muestro con un modelo de dos bloques que compiten por participación, una idea a la que vuelvo en el caso final. Aquí el PIB de un bloque emergente y uno maduro crecen a tasas distintas y comparten un techo común de producto mundial.
+La mayoría de los fenómenos relevantes no son una variable aislada, sino varias acopladas. `solve_ivp` maneja sistemas sin esfuerzo adicional: la función devuelve un vector de derivadas. Se ilustra con un modelo de dos bloques que compiten por participación, idea que se retoma en el caso final. Aquí el PIB de un bloque emergente y uno maduro crecen a tasas distintas y comparten un techo común de producto mundial.
 
 ```python
 def dos_bloques(t, estado):
@@ -77,11 +77,11 @@ brics_final, g7_final = sol.y[0][-1], sol.y[1][-1]
 print(f"A 60 años:  BRICS+={brics_final:.1f}   G7={g7_final:.1f}")
 ```
 
-El sistema acoplado captura algo que una sola ecuación no puede: la competencia por un recurso compartido. Cuando el bloque emergente crece, le aprieta el techo al maduro, y viceversa. Es un primer modelo crudo de transición de poder económico, y lo refino con datos reales en el caso del capítulo siguiente.
+El sistema acoplado captura algo que una sola ecuación no puede: la competencia por un recurso compartido. Cuando el bloque emergente crece, presiona el techo del maduro, y a la inversa. Es un primer modelo elemental de transición de poder económico, que se refina con datos reales en el caso del capítulo siguiente.
 
-## Cómo entrego los resultados de solve_ivp
+## Cómo se entregan los resultados de solve_ivp
 
-`sol.t` trae los tiempos y `sol.y` trae las trayectorias, una fila por variable. Lo paso a un DataFrame de pandas para graficarlo y analizarlo con el resto del stack:
+`sol.t` contiene los tiempos y `sol.y` las trayectorias, una fila por variable. Se convierte a un DataFrame de pandas para graficarlo y analizarlo con el resto del stack:
 
 ```python
 import pandas as pd
@@ -89,12 +89,10 @@ df = pd.DataFrame({"anio": sol.t, "BRICS+": sol.y[0], "G7": sol.y[1]})
 df.set_index("anio").plot()
 ```
 
-## Cierre
+## Bibliografía
 
-`solve_ivp` es la forma profesional de integrar ODEs en Python: trae Runge-Kutta adaptativo, control automático de paso, métodos implícitos para sistemas rígidos y soporte natural para sistemas de varias ecuaciones. Después de haber entendido los métodos a mano, usar la herramienta no es hacer trampa, es hacer ingeniería. Con esta maquinaria lista, en la siguiente página armo el caso completo del tema: un modelo logístico calibrado con datos reales del Banco Mundial para el PIB del bloque BRICS+.
+`solve_ivp` es la forma profesional de integrar ODEs en Python: ofrece Runge-Kutta adaptativo, control automático de paso, métodos implícitos para sistemas rígidos y soporte natural para sistemas de varias ecuaciones. Tras comprender los métodos manualmente, utilizar la herramienta no es un atajo, sino ingeniería. Con esta maquinaria disponible, la siguiente página presenta el caso completo del tema: un modelo logístico calibrado con datos reales del Banco Mundial para el PIB del bloque BRICS+.
 
 ## Referencias
 
-Virtanen, P., Gommers, R., Oliphant, T. E., Haberland, M., Reddy, T., Cournapeau, D., Burovski, E., Peterson, P., Weckesser, W., Bright, J., van der Walt, S. J., Brett, M., Wilson, J., Millman, K. J., Mayorov, N., Nelson, A. R. J., Jones, E., Kern, R., Larson, E., … Vázquez-Baeza, Y. (2020). SciPy 1.0: Fundamental algorithms for scientific computing in Python. *Nature Methods, 17*(3), 261-272. https://doi.org/10.1038/s41592-019-0686-2
-
-Law, A. M. (2014). *Simulation modeling and analysis* (5a ed.). McGraw-Hill.
+1. Virtanen, P., Gommers, R., Oliphant, T. E., Haberland, M., Reddy, T., Cournapeau, D., Burovski, E., Peterson, P., Weckesser, W., Bright, J., van der Walt, S. J., Brett, M., Wilson, J., Millman, K. J., Mayorov, N., Nelson, A. R. J., Jones, E., Kern, R., Larson, E., … Vázquez-Baeza, Y. (2020). SciPy 1.0: Fundamental algorithms for scientific computing in Python. *Nature Methods, 17*(3), 261-272. https://doi.org/10.1038/s41592-019-0686-2

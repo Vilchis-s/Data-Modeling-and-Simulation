@@ -1,16 +1,16 @@
 # 7.1 De la predicción a la recomendación
 
-El último tema es el que cierra el círculo y, en mi opinión, el que más distingue a un científico de datos de un analista que solo corre modelos. Un pronóstico bien interpretado todavía no es una recomendación. La recomendación es la frase que dice qué hacer, asumiendo el costo de equivocarse. Este capítulo trata cómo dar ese salto sin perder el rigor que construí en los seis temas anteriores.
+El último tema cierra el círculo y es, posiblemente, el que más distingue a un científico de datos de un analista que solo ejecuta modelos. Un pronóstico bien interpretado todavía no es una recomendación. La recomendación es la formulación que indica qué hacer, asumiendo el costo de equivocarse. Este capítulo trata cómo dar ese salto sin perder el rigor construido en los seis temas anteriores.
 
 ## La brecha entre predecir y recomendar
 
-Predecir responde qué va a pasar. Recomendar responde qué deberíamos hacer dado lo que va a pasar y lo que nos cuesta equivocarnos. Entre las dos hay una función de pérdida que es responsabilidad de quien decide, no del modelo. El mismo pronóstico justifica recomendaciones opuestas según el apetito de riesgo: un fondo agresivo y un fondo de pensiones leen el mismo cono de incertidumbre y actúan distinto, y ambos pueden tener razón.
+Predecir responde qué va a ocurrir. Recomendar responde qué debe hacerse dado lo que va a ocurrir y lo que cuesta equivocarse. Entre ambas media una función de pérdida que es responsabilidad de quien decide, no del modelo. El mismo pronóstico justifica recomendaciones opuestas según el apetito de riesgo: un fondo agresivo y un fondo de pensiones leen el mismo cono de incertidumbre y actúan distinto, y ambos pueden tener razón.
 
-La guía del curso lo enmarca con su flujo de tres pasos: el aprendizaje automático predice, la simulación genera escenarios, y la optimización encuentra la mejor política dentro de esos escenarios (Law, 2014). La recomendación vive en el tercer paso. Hasta ahora el libro hizo los dos primeros; este tema hace el tercero.
+La guía de estudio lo enmarca con su flujo de tres pasos: el aprendizaje automático predice, la simulación genera escenarios, y la optimización encuentra la mejor política dentro de esos escenarios. La recomendación reside en el tercer paso. Hasta ahora el trabajo realizó los dos primeros; este tema realiza el tercero.
 
 ## La regla de oro de comunicar resultados
 
-La guía tiene una tabla que me parece la mejor síntesis de cómo no comunicar y cómo sí (Law, 2014). La traduzco a nuestro caso.
+La guía de estudio incluye una tabla que sintetiza cómo no comunicar y cómo sí. Se traslada al caso.
 
 ```
 Incorrecto                                  Correcto
@@ -19,19 +19,19 @@ Incorrecto                                  Correcto
 "El bloque crecerá 6% anual"                 "Crecimiento medio 6%, con años de crisis posibles"
 ```
 
-Una recomendación que no carga la incertidumbre no es una recomendación profesional, es una apuesta disfrazada de certeza. Toda recomendación que doy en este tema lleva su intervalo y su probabilidad, fiel a esta regla.
+Una recomendación que no carga la incertidumbre no es una recomendación profesional, sino una apuesta disfrazada de certeza. Toda recomendación de este tema lleva su intervalo y su probabilidad, fiel a esta regla.
 
 ## El formato de una recomendación accionable
 
-Una buena recomendación tiene cuatro partes, y las uso como plantilla.
+Una buena recomendación tiene cuatro partes, que sirven de plantilla.
 
 La acción: qué hacer concretamente, un verbo, no una observación. Aumentar, mantener, reducir, esperar.
 
-La justificación cuantitativa: el resultado del modelo que la respalda, con su incertidumbre. No un número pelado.
+La justificación cuantitativa: el resultado del modelo que la respalda, con su incertidumbre. No un número aislado.
 
 La condición: bajo qué supuestos vale, y qué la invalidaría. Una recomendación sin condiciones es frágil.
 
-El monitoreo: qué señal vigilar para saber si hay que revisar. Una recomendación viva, no de una sola vez.
+El monitoreo: qué señal vigilar para saber si debe revisarse. Una recomendación viva, no de una sola vez.
 
 ```python
 recomendacion = {
@@ -44,18 +44,13 @@ recomendacion = {
 
 ## La asimetría de los errores
 
-Un punto que aprendí a tomar en serio: los errores no cuestan lo mismo en ambas direcciones. Recomendar aumentar exposición y equivocarse no cuesta lo mismo que recomendar no hacerlo y perder la oportunidad. Esta asimetría es la función de pérdida, y debe entrar explícitamente en la recomendación. La guía lo ilustra con el ejemplo de los agentes de un call center, donde el valor marginal de un nivel de servicio extra no justifica su costo (Law, 2014). La misma lógica aplica a la cartera: el valor marginal de capturar el último punto de crecimiento del bloque puede no justificar el riesgo de concentración que implica.
+Un punto que conviene tomar en serio: los errores no cuestan lo mismo en ambas direcciones. Recomendar aumentar exposición y equivocarse no cuesta lo mismo que recomendar no hacerlo y perder la oportunidad. Esta asimetría es la función de pérdida, y debe entrar de forma explícita en la recomendación. La guía de estudio lo ilustra con el ejemplo de los agentes de un call center, donde el valor marginal de un nivel de servicio adicional no justifica su costo. La misma lógica aplica a la cartera: el valor marginal de capturar el último punto de crecimiento del bloque puede no justificar el riesgo de concentración que implica.
 
 ## La humildad del modelo en la recomendación
 
-Quiero ser claro sobre algo que va con mi forma de entender el oficio. El modelo informa la recomendación, no la dicta. La decisión final sobre una cartera, una política pública o una alianza pondera factores que ningún modelo de PIB captura: política, instituciones, riesgo geopolítico, valores. Cuando recomiendo, mi trabajo es poner la mejor evidencia cuantitativa sobre la mesa con su incertidumbre, no pretender que el modelo reemplaza el juicio de quien carga la responsabilidad. Esa humildad no es debilidad técnica, es honestidad sobre el alcance de la herramienta.
+Conviene ser claro sobre el alcance de la herramienta. El modelo informa la recomendación, no la dicta. La decisión final sobre una cartera, una política pública o una alianza pondera factores que ningún modelo de PIB captura: política, instituciones, riesgo geopolítico, valores. Al recomendar, la función del análisis es poner la mejor evidencia cuantitativa sobre la mesa con su incertidumbre, no pretender que el modelo reemplaza el juicio de quien carga la responsabilidad. Esa humildad no es debilidad técnica, sino honestidad sobre el alcance de la herramienta.
 
-## Cierre
+## Bibliografía
 
-Pasar de la predicción a la recomendación es cruzar la brecha entre qué pasará y qué hacer, una brecha que llena la función de pérdida de quien decide. Una recomendación accionable carga acción, justificación cuantitativa con incertidumbre, condición y monitoreo, respeta la asimetría de los errores y reconoce que el modelo informa pero no dicta. Para construir recomendaciones robustas necesito ver cómo se comporta la decisión bajo distintos futuros, y eso exige simular escenarios, el tema de la siguiente página.
+Pasar de la predicción a la recomendación es cruzar la brecha entre qué ocurrirá y qué hacer, una brecha que llena la función de pérdida de quien decide. Una recomendación accionable carga acción, justificación cuantitativa con incertidumbre, condición y monitoreo, respeta la asimetría de los errores y reconoce que el modelo informa pero no dicta. Para construir recomendaciones robustas se requiere observar cómo se comporta la decisión bajo distintos futuros, lo que exige simular escenarios, tema de la siguiente página.
 
-## Referencias
-
-Law, A. M. (2014). *Simulation modeling and analysis* (5a ed.). McGraw-Hill.
-
-Provost, F., & Fawcett, T. (2013). *Data science for business: What you need to know about data mining and data-analytic thinking*. O'Reilly Media.

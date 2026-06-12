@@ -1,6 +1,6 @@
 # 5.5 Caso: selección del modelo para el PIB
 
-Cierro el Tema 5 ejecutando la selección completa para el PIB de BRICS+, juntando todo lo anterior: el árbol de decisión, los criterios de información, la comparación entre familias y la validación cruzada temporal. El objetivo es llegar a un veredicto defendible sobre qué modelo usar, con la evidencia ordenada, tal como lo entregaría en un proyecto real.
+El Tema 5 cierra ejecutando la selección completa para el PIB de BRICS+, integrando todo lo anterior: el árbol de decisión, los criterios de información, la comparación entre familias y la validación cruzada temporal. El objetivo es llegar a un veredicto defendible sobre qué modelo usar, con la evidencia ordenada, tal como se entregaría en un proyecto real.
 
 ## El procedimiento de selección, paso a paso
 
@@ -65,7 +65,7 @@ for k, v in res.items():
     print(f"{k:12s}: MAPE medio {v.mean():.2%}")
 ```
 
-Incluyo deliberadamente la línea base ingenua con deriva, porque cualquier modelo que no le gane no merece su complejidad, según la regla del capítulo 2.8. El modelo ingenuo es el estándar a vencer, no un relleno.
+Se incluye deliberadamente la línea base ingenua con deriva, pues cualquier modelo que no la supere no merece su complejidad, según la regla del capítulo 2.8 (tema-2-series-de-tiempo/08-validacion-metricas.md). El modelo ingenuo es el estándar a superar, no un relleno.
 
 ### Paso 3. Significancia de las diferencias
 
@@ -79,7 +79,7 @@ print(f"ODE vs ARIMA: diferencia {res['ODE'][:n].mean()-res['ARIMA'][:n].mean():
 
 ## La matriz de decisión
 
-Reúno toda la evidencia en una matriz, porque la selección no se decide por una celda sino por el patrón completo.
+Se reúne toda la evidencia en una matriz, pues la selección no se decide por una celda, sino por el patrón completo.
 
 ```
 Criterio              ODE logística      ARIMA              Ingenuo
@@ -93,26 +93,23 @@ Maneja choques         no                 parcial            no
 
 ## El veredicto razonado
 
-Mi decisión para este caso, defendible con la evidencia, es usar el ARIMA como modelo principal de pronóstico y conservar la ODE logística como modelo complementario de interpretación. La justificación es que cada uno gana en lo que la decisión del Tema 4 valora.
+La decisión para este caso, defendible con la evidencia, es usar el ARIMA como modelo principal de pronóstico y conservar la ODE logística como modelo complementario de interpretación. La justificación es que cada uno gana en lo que la decisión del Tema 4 valora.
 
-El ARIMA gana en lo que la decisión de cartera necesita sobre todo: pronóstico con intervalos de predicción, que son imprescindibles para cuantificar el riesgo de la asignación. Si su MAPE de validación le gana al ingenuo de forma significativa, su complejidad está justificada.
+El ARIMA gana en lo que la decisión de cartera necesita sobre todo: pronóstico con intervalos de predicción, imprescindibles para cuantificar el riesgo de la asignación. Si su MAPE de validación supera al ingenuo de forma significativa, su complejidad queda justificada.
 
-La ODE logística gana en interpretabilidad, que la decisión también valora para comunicar el mecanismo al comité: dos parámetros, tasa intrínseca y techo, cuentan la historia de la transición de un modo que un comité entiende, mientras que los coeficientes de un ARIMA no dicen nada a un no especialista. Además, su anclaje teórico la hace robusta pese a la serie corta.
+La ODE logística gana en interpretabilidad, que la decisión también valora para comunicar el mecanismo al comité: dos parámetros, tasa intrínseca y techo, cuentan la historia de la transición de un modo que un comité comprende, mientras que los coeficientes de un ARIMA no dicen nada a un no especialista. Además, su anclaje teórico la hace robusta pese a la serie corta.
 
-Usar los dos no es indecisión, es reconocer que predecir y entender son objetivos distintos que el árbol de decisión ya había separado, y que el caso necesita ambos. El ARIMA responde hacia dónde y con cuánta incertidumbre; la ODE responde por qué.
+Usar ambos no es indecisión, sino reconocer que predecir y comprender son objetivos distintos que el árbol de decisión ya había separado, y que el caso requiere ambos. El ARIMA responde hacia dónde y con cuánta incertidumbre; la ODE responde por qué.
 
-## Lo que descarto y por qué
+## Lo que se descarta y por qué
 
-Descarto el GBM como modelo principal pese a su elegancia, porque para una serie anual tan corta la estimación de la volatilidad es ruidosa y sus intervalos quedan mal calibrados; lo reservo para el Tema 7, donde su capacidad de generar escenarios sí aporta. Descarto modelos de aprendizaje automático complejos, boosting o redes, porque con dos décadas de datos anuales sobreajustarían sin remedio, violando la parsimonia. La guía es clara: cuando los datos escasean, los modelos basados en teoría y los parsimoniosos ganan (Law, 2014).
+Se descarta el GBM como modelo principal pese a su elegancia, pues para una serie anual tan corta la estimación de la volatilidad es ruidosa y sus intervalos quedan mal calibrados; se reserva para el Tema 7, donde su capacidad de generar escenarios sí aporta. Se descartan modelos de aprendizaje automático complejos, boosting o redes, pues con dos décadas de datos anuales sobreajustarían sin remedio, violando la parsimonia. La guía de estudio es clara: cuando los datos escasean, los modelos basados en teoría y los parsimoniosos ganan.
 
-## Cierre del Tema 5
+## Bibliografía del Tema 5
 
-La selección del mejor modelo no fue elegir un ganador único, fue construir un veredicto con evidencia ordenada: preselección por AIC, validación con origen móvil contra una línea base ingenua, prueba de significancia y una matriz de decisión que pondera precisión, incertidumbre, interpretabilidad y robustez. El resultado para el PIB de los bloques es un dúo, ARIMA para predecir y ODE para entender, justificado por la decisión que el modelo debe informar. Con el modelo elegido, el Tema 6 ataca lo que casi nadie hace bien: interpretar correctamente lo que el modelo dice.
+La selección del mejor modelo no fue elegir un ganador único, sino construir un veredicto con evidencia ordenada: preselección por AIC, validación con origen móvil contra una línea base ingenua, prueba de significancia y una matriz de decisión que pondera precisión, incertidumbre, interpretabilidad y robustez. El resultado para el PIB de los bloques es un dúo, ARIMA para predecir y ODE para comprender, justificado por la decisión que el modelo debe informar. Con el modelo elegido, el Tema 6 aborda lo que con frecuencia se hace mal: interpretar correctamente lo que el modelo indica.
 
 ## Referencias
 
-Law, A. M. (2014). *Simulation modeling and analysis* (5a ed.). McGraw-Hill.
-
-Banco Mundial. (2024). *World Development Indicators* [Conjunto de datos]. https://databank.worldbank.org/source/world-development-indicators
-
-Hyndman, R. J., & Athanasopoulos, G. (2021). *Forecasting: Principles and practice* (3a ed.). OTexts. https://otexts.com/fpp3/
+1. Banco Mundial. (2024). *World Development Indicators* [Conjunto de datos]. https://databank.worldbank.org/source/world-development-indicators
+2. Hyndman, R. J., & Athanasopoulos, G. (2021). *Forecasting: Principles and practice* (3a ed.). OTexts. https://otexts.com/fpp3/
